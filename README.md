@@ -1,3 +1,3 @@
 ### my-home-cluster
 
-![Alt text](server.jpg)
+<img src="server.jpg" alt="Logo" width="350" height="400"/>
