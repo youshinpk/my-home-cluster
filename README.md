@@ -1,4 +1,7 @@
-# Kubernetes 클러스터 운영 문서
+# my-home cluster
+<img src="./server.jpg" alt="My Image" width="400" height="500">
+
+
 
 ## 1. 목차
 - [소개](#2-introduce)
