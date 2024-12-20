@@ -1,0 +1,53 @@
+#  !/etc/netplan/01-netcfg.yaml
+# chmod 600 /etc/netplan/01-netcfg.yaml
+
+# control-plane config
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: false
+      addresses:
+        - 192.168.1.11/24
+      routes: 
+        - to: 0.0.0.0/24
+          via: 192.68.1.1
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 8.8.4.4
+
+# Worker1 config
+#network:
+#  version: 2
+#  renderer: networkd
+#  ethernets:
+#    eth0:
+#      dhcp4: false
+#      addresses:
+#        - 192.168.1.12/24
+#      routes: 
+#        - to: 0.0.0.0/24
+#          via: 192.68.1.1
+#      nameservers:
+#        addresses:
+#          - 8.8.8.8
+#          - 8.8.4.4
+
+# Worker2 config
+#network:
+#  version: 2
+#  renderer: networkd
+#  ethernets:
+#    eth0:
+#      dhcp4: false
+#      addresses:
+#        - 192.168.1.13/24
+#      routes: 
+#        - to: 0.0.0.0/24
+#          via: 192.68.1.1
+#      nameservers:
+#        addresses:
+#          - 8.8.8.8
+#          - 8.8.4.4
