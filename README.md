@@ -21,12 +21,11 @@
 ---
 
 ## 2. 소개
-이 문서는 나만의 Kubernetes 클러스터 환경에 대해 설명합니다. 이 클러스터는 개인적인 학습과 테스트를 위해 설정되었으며, 다양한 컨테이너화된 애플리케이션을 자유롭게 배포하고 운영할 수 있는 기반을 제공합니다. 이 환경에서는 최신 버전의 Kubernetes를 기반으로 여러 가지 서비스 및 도구를 사용하여 클러스터를 관리하고 모니터링할 수 있습니다.
+my-home-cluster 나만의 실험환경으로 Kubernetes에 대해서 탐구하고, 여러 Cloud Native 환경의 Application을 테스트 해볼 수 있는 환경입니다.
 
 ## 3. 정보
 
 ### 3.1 인프라 정보
-이 클러스터는 3개의 노드로 구성되어 있습니다. 각 노드는 Ubuntu 22.04 운영 체제를 사용하며, Control Plane 노드는 관리 기능을, Worker 노드들은 애플리케이션 컨테이너를 실행합니다.
 
 | Hostname      | IP            | OS            | CPU   | Memory | Disk  | 
 |---------------|---------------|---------------|-------|--------|-------|
@@ -40,7 +39,6 @@
 | kubeadm         | 1.30.8      | calico | nfs-provisionor | K9s      |
 
 ### 3.3 주요 애플리케이션
-이 클러스터에서는 여러 가지 애플리케이션을 Helm을 사용하여 배포하고 운영합니다.
 
 | Name          | Harbor    | Argo CD | Prometheus & Grafana   | Istio    |
 |---------------|-----------|---------|------------------------|----------|
@@ -52,7 +50,6 @@
 ## 4. 운영
 
 ### 4.1 로그 조회
-Kubernetes의 각 주요 컴포넌트와 관련된 로그를 확인하여 클러스터의 상태를 모니터링하고 문제를 해결할 수 있습니다.
 
 #### K8s 컴포넌트별 로그 조회
 
@@ -69,7 +66,6 @@ Kubernetes의 각 주요 컴포넌트와 관련된 로그를 확인하여 클러
 | containerd (CRI)                | `journalctl -u containerd`       |
 
 ### 4.2 시작 / 중지 / 재시작
-Kubernetes 서비스와 관련된 주요 동작 명령입니다.
 
 | 작업                     | 명령어 |
 |--------------------------|--------|
@@ -97,13 +93,13 @@ Kubernetes 서비스와 관련된 주요 동작 명령입니다.
 #### 참고 사항
 
 1. **인증서 만료 전 갱신 권장**  
-   기본적으로 Kubernetes 인증서는 1년 만료로 설정되므로 주기적으로 만료일을 확인
+   기본적으로 Kubernetes 인증서는 1년 만료로 설정되므로 주기적으로 만료일을 확인합니다.
 
 2. **갱신 후 재배포 필요 여부 확인**  
-   인증서를 갱신한 후, 일부 서비스가 갱신된 인증서를 인식하도록 재배포가 필요여부 확인이 필요
+   인증서를 갱신한 후, 일부 서비스가 갱신된 인증서를 인식하도록 재배포가 필요여부 확인이 필요합니다.
 
 3. **etcd 인증서 관리**  
-   etcd 관련 인증서의 경우 별도로 갱신해야 할 수도 있음 `/etc/kubernetes/pki/etcd` 디렉토
+   etcd 관련 인증서의 경우 별도로 갱신해야 할 수도 있습니다 `/etc/kubernetes/pki/etcd` 
 
 
 ### 4.4 업그레이드 관리
@@ -128,9 +124,9 @@ Kubernetes 서비스와 관련된 주요 동작 명령입니다.
 | | 버전 호환성 확인 | Kubernetes 공식 문서에서 확인 |
 
 #### 참고 사항
-- 업그레이드 전에 반드시 **클러스터의 백업**을 수행
-- 업그레이드 작업은 Control Plane부터 시작하여 Worker 노드를 순차적으로 진행
-- Kubernetes의 [공식 문서](https://kubernetes.io/docs/)를 참고하여 호환성과 업그레이드 절차를 확인필수
+- 업그레이드 전에 반드시 **클러스터의 백업**을 수행해야 합니다.
+- 업그레이드 작업은 Control Plane부터 시작하여 Worker 노드를 순차적으로 진행합니다.
+- Kubernetes의 [공식 문서](https://kubernetes.io/docs/)를 참고하여 호환성과 업그레이드 절차를 확인 합니다.
 
 
 ## 5. 백업 및 복구
@@ -160,8 +156,7 @@ Pod가 스케줄되지 않는 경우:
 서비스가 시작되지 않는 경우: ```kubectl get pods -n kube-system``` 명령어로 상태를 확인하고, 관련 로그를 확인합니다.
 
 ## 7. 참조
-Kubernetes 공식 문서  
-https://kubernetes.io/docs/home/
-https://engineering.linecorp.com/ko/blog/harbor-for-private-docker-registry
-https://k9scli.io/
-https://medium.com/@subhampradhan966/kubeadm-setup-for-ubuntu-24-04-lts-f6a5fc67f0df
+https://kubernetes.io/docs/home/  
+https://engineering.linecorp.com/ko/blog/harbor-for-private-docker-registry  
+https://k9scli.io/  
+https://medium.com/@subhampradhan966/kubeadm-setup-for-ubuntu-24-04-lts-f6a5fc67f0df  
