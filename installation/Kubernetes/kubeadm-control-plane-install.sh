@@ -49,14 +49,13 @@ sudo systemctl restart containerd
 sudo systemctl enable containerd
 
 # kubernetes 설치 (kubeadm)
-sudo curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get update
-
-sudo apt-get install -y kubelet=1.30.3-00 kubeadm=1.30.3-00 kubectl=1.30.3-00
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt update
+sudo apt install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-sudo kubeadm init --kubernetes-version=1.30.0
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 
 # kubectl 설정
 sudo mkdir -p $HOME/.kube
