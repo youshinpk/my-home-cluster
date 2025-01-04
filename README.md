@@ -30,21 +30,21 @@
 
 | Hostname      | IP            | OS            | CPU   | Memory | Disk  | 
 |---------------|---------------|---------------|-------|--------|-------|
-| Control Plane | 192.168.1.101 | Ubuntu 22.04  | 4core | 16GB   | 512GB |
-| Worker1       | 192.168.1.102 | Ubuntu 22.04  | 4core | 12GB   | 512GB |
-| Worker2       | 192.168.1.103 | Ubuntu 22.04  | 4core | 12GB   | 512GB |
+| Control Plane | 192.168.1.101 | Ubuntu 24.04  | 4core | 16GB   | 512GB |
+| Worker1       | 192.168.1.102 | Ubuntu 24.04  | 4core | 12GB   | 512GB |
+| Worker2       | 192.168.1.103 | Ubuntu 24.04  | 4core | 12GB   | 512GB |
 
 ### 3.2 Kubernetes 환경 정보
 | Initialization  | k8s version | CNI    | CSI             | Tool     | 
 |-----------------|-------------|--------|-----------------|----------|
-| kubeadm         | 1.29.1      | calico | nfs-provisionor | K9s      |
+| kubeadm         | 1.30.8      | calico | nfs-provisionor | K9s      |
 
 ### 3.3 주요 애플리케이션
 이 클러스터에서는 여러 가지 애플리케이션을 Helm을 사용하여 배포하고 운영합니다.
 
 | Name          | Harbor    | Argo CD | Prometheus & Grafana   | Istio    |
 |---------------|-----------|---------|------------------------|----------|
-| version       | 1.22      | 1.22    | 1.22                   | 1.22     |
+| version       | --        | --      | --                     | --       |
 | deploy        | helm      | helm    | helm                   | helm     |
 
 ---
@@ -161,5 +161,7 @@ Pod가 스케줄되지 않는 경우:
 
 ## 7. 참조
 Kubernetes 공식 문서  
-Harbor for Private Docker Registry  
-K9s 공식 문서
+https://kubernetes.io/docs/home/
+https://engineering.linecorp.com/ko/blog/harbor-for-private-docker-registry
+https://k9scli.io/
+https://medium.com/@subhampradhan966/kubeadm-setup-for-ubuntu-24-04-lts-f6a5fc67f0df
