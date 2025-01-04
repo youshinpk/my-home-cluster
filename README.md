@@ -159,6 +159,6 @@ Pod가 스케줄되지 않는 경우:
 서비스가 시작되지 않는 경우: ```kubectl get pods -n kube-system``` 명령어로 상태를 확인하고, 관련 로그를 확인합니다.
 
 ## 7. 참조
-Kubernetes 공식 문서
-Harbor for Private Docker Registry
+Kubernetes 공식 문서  
+Harbor for Private Docker Registry  
 K9s 공식 문서

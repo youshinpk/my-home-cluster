@@ -1,49 +1,83 @@
-# 초기 os 설정
-
-# 스왑 비활성화
+# 1. 초기 os 설정
+# 1-1) 스왑 비활성화
 sudo swapoff -a
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
 
-# 방화벽 전체 오픈
-sudo ufw disable
+# 1-2) 방화벽 전체 오픈
+sudo apt-get install -y firewalld
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
 
-# IP 포워딩 활성화
-sudo modprobe br_netfilter
-echo "br_netfilter" | sudo tee /etc/modules-load.d/k8s.conf
+# 1-3) 네트워크 설정
+sudo cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+br_netfilter
+EOF
 
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+sudo cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
 
 sudo sysctl --system
 
-# 1. apt 패키지 색인을 업데이트하고, 쿠버네티스 apt 리포지터리를 사용하는 데 필요한 패키지를 설치한다.
+# 2. Container runtime 설치
+# 2-1) Docker 설치
 sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
 
-# 2. 구글 클라우드의 공개 사이닝 키를 다운로드 한다.
-sudo curl -fsSLo /etc/apt/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-sudo mkdir -p -m 755 /etc/apt/keyrings
-sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo apt update
+sudo apt install -y docker.io 또는 sudo apt install -y docker-ce
+docker --version
 
-# 3. 쿠버네티스 apt 레포지터리 추가한다.
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo mkdir /etc/docker
+sudo cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
 
-# 4. apt 패키지 색인을 업데이트하고, kubelet, kubeadm, kubectl을 설치하고 해당 버전을 고정한다.
+sudo service docker restart
+sudo service docker status
+
+# 3. kubernetes 설치 (kubeadm)
+# 3-1) 구글 클라우드의 공캐키 다운로드 및 쿠버네티스 레포지토리 추가
 sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+
+curl -fsSLo /etc/apt/keyrings/kubernetes-archive-keyring.gpg https://dl.k8s.io/apt/doc/apt-key.gpg
+sudo echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# sudo echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+# sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# 3-2) 패키지 설치
+sudo apt-get update
+
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-# 5. kubeadm 설치 진행
-kubeadm init
+kubelet --version
+kubeadm version
+kubectl version
 
-# 6. kubectl 설정
+sudo systemctl status kubelet.service
+
+# 3-3) control-plane init 진행행
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+# 3-4) kubectl 설정
 sudo mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-# CNI 설치
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+# 3-5) CNI 설치 (flannel)
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
