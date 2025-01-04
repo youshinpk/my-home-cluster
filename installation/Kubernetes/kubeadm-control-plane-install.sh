@@ -25,31 +25,28 @@ EOF
 sudo sysctl --system
 
 # 2. Container runtime 설치
-# 2-1) Docker 설치
+# 2-1) Containerd 설치
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
 
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-sudo apt update
-sudo apt install -y docker-ce
-docker --version
+sudo apt-get update
+sudo apt-get install containerd
+sudo systemctl status containerd
 
-sudo mkdir /etc/docker
-sudo cat <<EOF | sudo tee /etc/docker/daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2"
-}
-EOF
+# 2-2) Containerd 설정 필요
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
 
-sudo service docker restart
-sudo service docker status
+# 2-3) Containerd config 수정 
+vi /etc/containerd/config.toml
+# [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+#  SystemdCgroup = true
+
+sudo systemctl restart containerd
+
 
 # 3. kubernetes 설치 (kubeadm)
 # 3-1) 구글 클라우드의 공캐키 다운로드 및 쿠버네티스 레포지토리 추가
