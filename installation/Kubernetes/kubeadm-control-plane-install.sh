@@ -22,6 +22,9 @@ net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
 
+sudo sh -c 'echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf'
+#sudo sysctl -p
+
 sudo sysctl --system
 
 # 2. Container runtime 설치
