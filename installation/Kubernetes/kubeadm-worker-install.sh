@@ -1,76 +1,62 @@
-# 1. 초기 os 설정
-# 1-1) 스왑 비활성화
+# 시스템 업데이트 및 필수 패키지 설치
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
+# 스왑 비활성화
 sudo swapoff -a
-sudo sed -i '/ swap / s/^/#/' /etc/fstab
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
-# 1-2) 방화벽 전체 오픈
-sudo apt-get install -y firewalld
-sudo systemctl stop firewalld
-sudo systemctl disable firewalld
+# 방화벽 전체 오픈
+## Kubernetes API
+sudo iptables -A INPUT -p tcp --dport 6443 -j ACCEPT
 
-# 1-3) 네트워크 설정
-sudo cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-br_netfilter
-EOF
+## etcd
+sudo iptables -A INPUT -p tcp --dport 2379:2380 -j ACCEPT
 
-sudo cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+## Kubelet
+sudo iptables -A INPUT -p tcp --dport 10250:10255 -j ACCEPT
+
+## NodePort 서비스
+sudo iptables -A INPUT -p tcp --dport 30000:32767 -j ACCEPT
+
+## 네트워크 플러그인
+sudo iptables -A INPUT -p udp --dport 4789 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 51820 -j ACCEPT
+
+sudo iptables-save > /etc/iptables/rules.v4
+
+# 네트워크 설정
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward                 = 1
 EOF
 
 sudo sysctl --system
 
-# 2. Container runtime 설치
-# 2-1) Docker 설치
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+# Container runtime 설치
+sudo apt-get install -y containerd
 
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
 
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+
+# kubernetes 설치 (kubeadm)
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo apt update
-sudo apt install -y docker.io 또는 sudo apt install -y docker-ce
-docker --version
-
-sudo mkdir /etc/docker
-sudo cat <<EOF | sudo tee /etc/docker/daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2"
-}
-EOF
-
-sudo service docker restart
-sudo service docker status
-
-# 3. kubernetes 설치 (kubeadm)
-# 3-1) 구글 클라우드의 공캐키 다운로드 및 쿠버네티스 레포지토리 추가
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
-
-curl -fsSLo /etc/apt/keyrings/kubernetes-archive-keyring.gpg https://dl.k8s.io/apt/doc/apt-key.gpg
-sudo echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-# sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-# sudo echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-# sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-# 3-2) 패키지 설치
-sudo apt-get update
-
-sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-kubelet --version
-kubeadm version
-kubectl version
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 
-sudo systemctl status kubelet.service
-
-# 3-3) Worker node init 진행
-kubeadm join 192.168.1.107:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+# Worker node init 진행
+kubeadm join 192.168.0.101:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
 
